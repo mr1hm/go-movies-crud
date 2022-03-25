@@ -22,18 +22,70 @@ type Director struct {
 	LastName  string `json:"lastname"`
 }
 
+type Res struct {
+	Success string
+}
+
 var movies []Movie
+
+func getMovies(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "application/json")
+
+	// Encode movies list to JSON
+	json.NewEncoder(w).Encode(movies)
+}
+
+func getMovie(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "application/json")
+	params := mux.Vars(r)
+	for _, m := range movies {
+		if strconv.Itoa(m.ID) == params["id"] {
+			json.NewEncoder(w).Encode(m)
+			return
+		}
+	}
+}
+
+func deleteMovie(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "application/json")
+	params := mux.Vars(r)
+	for i, m := range movies {
+		if strconv.Itoa(m.ID) == params["id"] {
+			movies = append(movies[:i], movies[i+1:]...)
+			break
+		}
+	}
+	json.NewEncoder(w).Encode(movies)
+}
+
+func addMovie(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "application/json")
+	var movie Movie
+	_ = json.NewDecoder(r.Body).Decode(&movie)
+	movie.ID = rand.Intn(1000000)
+	movies = append(movies, movie)
+	json.NewEncoder(w).Encode(movie)
+}
+
+func updateMovie(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "application/json")
+	params := mux.Vars(r)
+	for i, m := range movies {
+
+	}
+
+}
 
 func main() {
 	r := mux.NewRouter()
 
 	movies = append(movies, Movie{ID: 1, ISBN: 492338, Title: "Movie One", Director: &Director{FirstName: "John", LastName: "Smith"}})
 	movies = append(movies, Movie{ID: 2, ISBN: 457422, Title: "Movie Two", Director: &Director{FirstName: "Mad", LastName: "Max"}})
-	r.HandleFunc("/movies", getMovies).Method("GET")
-	r.HandleFunc("/movies/{id}", getMovie).Method("GET")
-	r.HandleFunc("/movies", createMovie).Method("POST")
-	r.HandleFunc("/movies/{id}", updateMovie).Method("PUT")
-	r.HandleFunc("/movies/{id}", deleteMovie).Method("DELETE")
+	r.HandleFunc("/movies", getMovies).Methods("GET")
+	r.HandleFunc("/movies/{id}", getMovie).Methods("GET")
+	r.HandleFunc("/movies", addMovie).Methods("POST")
+	r.HandleFunc("/movies/{id}", updateMovie).Methods("PUT")
+	r.HandleFunc("/movies/{id}", deleteMovie).Methods("DELETE")
 
 	fmt.Printf("Starting Go CRUD API Server on Port 8080\n")
 	log.Fatal(http.ListenAndServe(":8080", r))
