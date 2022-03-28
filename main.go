@@ -10,29 +10,41 @@ import (
 	"strconv"
 )
 
+type Director struct {
+	FirstName string `json:"firstname"`
+	LastName  string `json:"lastname"`
+}
+
+type Status struct {
+	Success bool   `json:"success"`
+	Error   string `json:"error,omitempty"`
+}
+
 type Movie struct {
+	Status   *Status   `json:"status"`
 	ID       int       `json:"id"`
 	ISBN     int       `json:"isbn"`
 	Title    string    `json:"title"`
 	Director *Director `json:"director"`
 }
 
-type Director struct {
-	FirstName string `json:"firstname"`
-	LastName  string `json:"lastname"`
-}
-
 type Res struct {
-	Success string
+	Status *Status `json:"status"`
+	Movies []Movie `json:"movies"`
 }
 
 var movies []Movie
 
 func getMovies(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
+	var status Status
+	status.Success = true
 
 	// Encode movies list to JSON
-	json.NewEncoder(w).Encode(movies)
+	json.NewEncoder(w).Encode(&Res{
+		Status: &status,
+		Movies: movies,
+	})
 }
 
 func getMovie(w http.ResponseWriter, r *http.Request) {
